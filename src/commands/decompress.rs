@@ -11,6 +11,8 @@ pub struct Decompress {
     output: Option<std::path::PathBuf>,
     #[arg(short, long, help="Force delete destination directory.")]
     force: bool,
+    #[arg(long="no-assets", help="Do not decode assets.")]
+    no_assets: bool,
     #[arg(long="only-main-classes", help="decompress only main classes.")]
     only_main_classes: bool,
     #[arg(short='r', long="no-res", help="Do not decode resources.")]
@@ -38,6 +40,9 @@ impl Decompress {
         cmd.arg(self.input.to_str().unwrap());
         if self.force {
             cmd.arg("-f");
+        }
+        if self.no_assets {
+            cmd.arg("--no-assets");
         }
         if self.only_main_classes {
             cmd.arg("--only-main-classes");

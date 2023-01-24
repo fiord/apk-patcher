@@ -25,7 +25,7 @@ fn main() {
             println!("patches");
         },
         commands::Compress(compress) => {
-            println!("compress");
+            compress.execute();
         },
     }
 
