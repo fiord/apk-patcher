@@ -1,6 +1,7 @@
-use std::{path::PathBuf, str::FromStr, process::Command};
+use std::{path::PathBuf, str::FromStr, process::Command, borrow::Borrow};
 use execute::Execute;
 use clap::Parser;
+use regex::Regex;
 
 #[derive(Parser)]
 pub struct Compress {
@@ -35,7 +36,7 @@ impl Compress {
             Some(v) => v,
             None => {
                 let input_str = self.input.to_str().unwrap();
-                let output_str = format!("{}.apk", input_str);
+                let output_str = format!("{}.packed.apk", input_str);
                 PathBuf::from_str(&output_str).unwrap()
             }
         };
@@ -55,11 +56,23 @@ impl Compress {
 
         // zipalign
         cmd = Command::new("zipalign");
-        cmd.args(["-f", "-v"]);
+        cmd.args(["-f", "-v", "4"]);
+        let re = Regex::new(r"\.packed\.apk$").unwrap();
+        let replaced = re.replace(output.to_str().unwrap(), ".signed.apk");
+        let signed_path: &str = replaced.borrow();
+        cmd.arg(output.to_str().unwrap());
+        cmd.arg(signed_path);
         if !Compress::execute_command(cmd) {
             return;
         }
 
         // apksigner
+        cmd = Command::new("apksigner");
+        cmd.args(["sign", "--ks", "apk-patcher.keystore", "--ks-key-alias", "apk-patcher", "--ks-pass", "pass:apk-patcher"]);
+        cmd.arg(signed_path);
+        if !Compress::execute_command(cmd) {
+            return;
+        }
+        println!("[apk-patcher] finished.");
     }
 }
